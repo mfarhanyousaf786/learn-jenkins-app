@@ -119,10 +119,10 @@ pipeline {
 
             steps {
                 sh '''
-                    netlify@20.1.1 --version
+                    netlify --version
                     echo "Deploying to staging. Site ID: $NETLIFY_SITE_ID"
-                    netlify@20.1.1 status
-                    netlify@20.1.1 deploy --dir=build --json > deploy-output.json
+                    netlify status
+                    netlify deploy --dir=build --json > deploy-output.json
                     CI_ENVIRONMENT_URL=$(jq -r '.deploy_url' deploy-output.json)
                     npx playwright test  --reporter=html
                 '''
@@ -150,10 +150,10 @@ pipeline {
             steps {
                 sh '''
                     node --version
-                    netlify@20.1.1 --version
+                    netlify --version
                     echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
-                    netlify@20.1.1 status
-                    netlify@20.1.1 deploy --dir=build --prod
+                    netlify status
+                    netlify deploy --dir=build --prod
                     npx playwright test  --reporter=html
                 '''
             }
