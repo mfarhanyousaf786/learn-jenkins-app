@@ -2,41 +2,12 @@ pipeline {
     agent any
 
     environment {
-	    NETLIFY_SITE_ID = '5e75f11a-4eeb-4c49-9562-f0ef3b21896d'
+        NETLIFY_SITE_ID = '5e75f11a-4eeb-4c49-9562-f0ef3b21896d'
         NETLIFY_AUTH_TOKEN = credentials('netlify-token')
         REACT_APP_VERSION = "1.0.$BUILD_ID"
     }
 
     stages {
-
-        stage('Docker') {
-            steps {
-                sh '''
-                    docker build -t my-playwright .
-                '''
-            }
-        }
-
-        stage('AWS') {
-            agent {
-                docker {
-                    image 'amazon/aws-cli'
-                    args "--entrypoint=''"
-                }
-            }
-            environment {
-                AWS_S3_BUCKET = 'jenkins-learning-farhan'
-            }
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                    sh '''
-                        aws --version
-                        echo "Hello S3!" > index.html
-                        aws s3 cp index.html s3://$AWS_S3_BUCKET/index.html
-                    '''
-                }
-            }
-        }
 
         stage('Build') {
             agent {
@@ -57,7 +28,28 @@ pipeline {
             }
         }
 
-        /*stage('Tests') {
+        stage('AWS') {
+            agent {
+                docker {
+                    image 'amazon/aws-cli'
+                    reuseNode true
+                    args "--entrypoint=''"
+                }
+            }
+            environment {
+                AWS_S3_BUCKET = 'jenkins-learning-farhan'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'my-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    sh '''
+                        aws --version
+                        aws s3 sync build s3://$AWS_S3_BUCKET
+                    '''
+                }
+            }
+        }
+
+        stage('Tests') {
             parallel {
                 stage('Unit tests') {
                     agent {
@@ -103,7 +95,7 @@ pipeline {
                     }
                 }
             }
-        }*/
+        }
 
         stage('Deploy staging') {
             agent {
@@ -114,7 +106,7 @@ pipeline {
             }
 
             environment {
-                CI_ENVIRONMENT_URL = 'https://dazzling-sherbet-125308.netlify.app/'
+                CI_ENVIRONMENT_URL = 'STAGING_URL_TO_BE_SET'
             }
 
             steps {
